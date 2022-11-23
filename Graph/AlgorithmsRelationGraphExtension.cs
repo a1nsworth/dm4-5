@@ -2,60 +2,61 @@ namespace Graph;
 
 public static class AlgorithmsRelationGraphExtension
 {
-    public static Graph Composition(this Graph graph1, Graph graph2, ref ulong[,] matrix)
+    public static ulong[,] Composition(this Graph graph1, ulong[,] graph2)
     {
-        var list = new List<(int, int)>();
-        var minLength = Math.Min(Math.Min(graph1.CountColumn, graph2.CountColumn),
-            Math.Min(graph1.CountRows, graph2.CountRows));
-        var maxElement = 0;
-        for (var row = 1; row <= minLength; row++)
-        {
-            for (var column = 1; column <= minLength; column++)
-            {
-                for (var z = 0; z < minLength; z++)
-                {
-                    if (graph1[row - 1, z] && graph2[z, column - 1])
-                    {
-                        maxElement = Math.Max(maxElement, Math.Max(row, column));
-                        list.Add((row, column));
+        var result = new ulong[graph1.CountRows, graph1.CountColumn];
 
-                        matrix[row - 1, column - 1] += Convert.ToUInt32(graph1[row - 1, z - 1]) *
-                                                       Convert.ToUInt32(graph2[z - 1, column - 1]);
-                    }
+        for (var row = 0; row < graph1.CountRows; row++)
+        {
+            for (var column = 0; column < graph1.CountColumn; column++)
+            {
+                for (var z = 0; z < graph1.CountColumn; z++)
+                {
+                    result[row, column] += Convert.ToUInt32(graph1[row, z]) * graph2[z, column];
                 }
             }
         }
 
-        return maxElement == 0
-            ? new Graph(Math.Min(graph1.CountRows, graph2.CountRows), Math.Min(graph1.CountColumn, graph2.CountColumn))
-            : new Graph(list, maxElement);
+        return result;
     }
 
-    public static (Graph, ulong[,]) Exponentiation(this Graph graph, int degree)
+    public static ulong[,] Exponentiation(this Graph graph, int degree)
     {
-        var result = new Graph(graph.CountRows, graph.CountColumn);
-        var size = Math.Min(result.CountColumn, result.CountRows);
-        var m = new ulong[graph.CountRows, graph.CountColumn];
-
-        if (degree == 0)
+        var result = new ulong[graph.CountRows, graph.CountColumn];
+        for (var row = 0; row < graph.CountRows; row++)
         {
-            for (var row = 0; row < size; row++)
+            for (var column = 0; column < graph.CountColumn; column++)
             {
-                result[row, row] = true;
-                m[row, row] += Convert.ToUInt32(result[row, row]);
-            }
-        }
-        else
-        {
-            result = (Graph)graph.Clone();
-            for (var i = 2; i <= degree; i++)
-            {
-                result = Composition(graph, result, ref m);
+                if (graph[row, column])
+                    result[row, column] = 1;
             }
         }
 
-        return (result, m);
+        switch (degree)
+        {
+            case 0:
+            {
+                for (var row = 0; row < graph.CountRows; row++)
+                {
+                    for (var column = 0; column < graph.CountColumn; column++)
+                    {
+                        result[row, column] = 1;
+                    }
+                }
+
+                break;
+            }
+            case > 1:
+            {
+                for (var i = 2; i <= degree; i++)
+                {
+                    result = Composition(graph, result);
+                }
+
+                break;
+            }
+        }
+
+        return result;
     }
-    
-    
 }

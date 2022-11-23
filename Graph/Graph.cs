@@ -113,16 +113,31 @@ public sealed class Graph : IMatrix<bool>, ICloneable
         return resultVertices;
     }
 
-    public static ulong GetCountRoutesBetweenAllTwoVertices(Graph graph, uint lenght)
+    public static ulong GetCountRoutesBetweenAllTwoVertices(Graph graph, int lenght)
     {
-        if (lenght == 0)
+        var r = new ulong[graph.CountRows, graph.CountColumn];
+        for (var row = 0; row < graph.CountRows; row++)
         {
-            throw new ArgumentException("lenght can`t equal 0");
+            for (var column = 0; column < graph.CountColumn; column++)
+            {
+                if (graph[row, column])
+                    r[row, column] = 1;
+            }
         }
 
-        var (_, m) = graph.Exponentiation((int)lenght);
+        r = graph.Exponentiation(lenght);
 
-        return m.Cast<ulong>().Aggregate<ulong, ulong>(0, (current, x) => current + x);
+        ulong count = 0;
+        for (var row = 0; row < graph.CountRows; row++)
+        {
+            for (var columns = 0; columns < graph.CountColumn; columns++)
+            {
+                if (r[row, columns] != 0)
+                    count += r[row, columns];
+            }
+        }
+
+        return count;
     }
 
     private static void PrintAllRoutesBetweenVertices(Graph graph, IList<int> routes, int endVertex, int
@@ -139,7 +154,7 @@ public sealed class Graph : IMatrix<bool>, ICloneable
                 }
                 else if (routes[indexRoute] == endVertex)
                 {
-                    Console.WriteLine(string.Join(',', routes.ToString()));
+                    Console.WriteLine(string.Join(',', routes.Select(x => x)));
                 }
             }
         }
@@ -148,16 +163,16 @@ public sealed class Graph : IMatrix<bool>, ICloneable
     public static void PrintAllRoutesBetweenVertices(Graph graph, int beginVertex, int endVertex, ulong lenght)
     {
         var routes = new int[lenght + 1];
-        routes[0] = (int)(lenght + 1);
+        routes[0] = beginVertex;
 
-        PrintAllRoutesBetweenVertices(graph, routes, endVertex, (int)lenght, lenght);
+        PrintAllRoutesBetweenVertices(graph, routes, endVertex, 1, lenght);
     }
 
-    public static bool FindEqual<T>(IList<T> iList, T equal, int border)
+    public static bool FindEqual<T>(IList<T> collection, T equal, int border)
     {
-        for (var i = 0; i <= border; i++)
+        for (var i = 0; i < border; i++)
         {
-            if (Equals(iList[i], equal))
+            if (Equals(collection[i], equal))
             {
                 return true;
             }
@@ -166,43 +181,9 @@ public sealed class Graph : IMatrix<bool>, ICloneable
         return false;
     }
 
-    public static int GetIndexLastEqualZero(IList<int> collection)
-    {
-        for (var i = 0; i < collection.Count; i++)
-        {
-            if (collection[i] == 0)
-            {
-                return i;
-            }
-
-            if (i + 1 == collection.Count)
-            {
-                return i + 1;
-            }
-        }
-
-        return collection.Count;
-    }
-
-    public static bool AllAreUnique(IList<int> collection, int lastElement)
-    {
-        for (var i = 0; i < lastElement - 1; i++)
-        {
-            for (var j = i + 1; j < lastElement; j++)
-            {
-                if (collection[i] == collection[j + 1])
-                {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public static bool IsInclude(Graph graph, IList<int> collection)
     {
-        for (var i = 0; i < collection.Count - 1 && collection[i] != 0; i++)
+        for (var i = 0; i < collection.Count - 1; i++)
         {
             if (!graph[collection[i] - 1, collection[i + 1] - 1])
             {
@@ -213,31 +194,42 @@ public sealed class Graph : IMatrix<bool>, ICloneable
         return true;
     }
 
-    private static void PrintAllMaxSimpleChain(Graph graph, IList<int> routes, int indexRoute)
+    private static void PrintAllMaxSimpleChain(Graph graph, List<int> routes, int indexRoute)
     {
-        var f = true;
-        for (var column = 0; column < graph.CountColumn; column++)
+        var isUnique = true;
+        for (var column = 0; column < graph.CountColumn && indexRoute < routes.Count; column++)
         {
-            if (graph[routes[indexRoute - 1] - 1, column] && !FindEqual(routes, column + 1, indexRoute - 1))
+            if (graph[routes[indexRoute - 1] - 1, column] && !FindEqual(routes, column + 1, indexRoute))
             {
-                f = false;
+                isUnique = false;
                 routes[indexRoute] = column + 1;
                 PrintAllMaxSimpleChain(graph, routes, indexRoute + 1);
             }
+        }
 
-            if (f && IsInclude(graph, routes) && AllAreUnique(routes, GetIndexLastEqualZero(routes)))
+        if (isUnique)
+        {
+            while (routes[^1] == 0)
             {
-                Console.WriteLine(string.Join(',', routes.ToString()));
+                routes.RemoveAt(routes.Count - 1);
+            }
+
+            if (IsInclude(graph, routes))
+            {
+                Console.WriteLine(string.Join(',', routes.Select(x => x)));
             }
         }
     }
 
-    public static void PrintAllMaxSimpleChain(Graph graph, int vertex)
+    public static void PrintAllMaxSimpleChain(Graph graph)
     {
-        var routes = new int[graph.CountRows - 1];
-        routes[0] = vertex;
+        var routes = Enumerable.Repeat(0, graph.CountRows).ToList();
 
-        PrintAllMaxSimpleChain(graph, routes, 1);
+        for (var i = 1; i <= graph.CountRows; i++)
+        {
+            routes[0] = i;
+            PrintAllMaxSimpleChain(graph, routes, 1);
+        }
     }
 
     public object Clone() => new Graph(CountRows, CountRows);
