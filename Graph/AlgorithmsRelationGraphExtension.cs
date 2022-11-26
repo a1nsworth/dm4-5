@@ -4,13 +4,13 @@ public static class AlgorithmsRelationGraphExtension
 {
     public static ulong[,] Composition(this Graph graph1, ulong[,] graph2)
     {
-        var result = new ulong[graph1.CountRows, graph1.CountColumn];
+        var result = new ulong[graph1.CountRows, graph1.CountColumns];
 
         for (var row = 0; row < graph1.CountRows; row++)
         {
-            for (var column = 0; column < graph1.CountColumn; column++)
+            for (var column = 0; column < graph1.CountColumns; column++)
             {
-                for (var z = 0; z < graph1.CountColumn; z++)
+                for (var z = 0; z < graph1.CountColumns; z++)
                 {
                     result[row, column] += Convert.ToUInt32(graph1[row, z]) * graph2[z, column];
                 }
@@ -22,10 +22,10 @@ public static class AlgorithmsRelationGraphExtension
 
     public static ulong[,] Exponentiation(this Graph graph, int degree)
     {
-        var result = new ulong[graph.CountRows, graph.CountColumn];
+        var result = new ulong[graph.CountRows, graph.CountColumns];
         for (var row = 0; row < graph.CountRows; row++)
         {
-            for (var column = 0; column < graph.CountColumn; column++)
+            for (var column = 0; column < graph.CountColumns; column++)
             {
                 if (graph[row, column])
                     result[row, column] = 1;
@@ -38,7 +38,7 @@ public static class AlgorithmsRelationGraphExtension
             {
                 for (var row = 0; row < graph.CountRows; row++)
                 {
-                    for (var column = 0; column < graph.CountColumn; column++)
+                    for (var column = 0; column < graph.CountColumns; column++)
                     {
                         result[row, column] = 1;
                     }
